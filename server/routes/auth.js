@@ -72,3 +72,40 @@ router.get("/me", async (req, res) => {
   const user = await User.findById(req.session.userId).select("firstName lastName username email");
   res.json(user);
 });
+// --- Şifre değiştir ---
+router.post("/change-password", async (req, res) => {
+  try {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Giriş gerekli" });
+    }
+
+    const { currentPassword, newPassword } = req.body || {};
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: "Mevcut şifre ve yeni şifre gerekli" });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: "Yeni şifre en az 6 karakter olmalı" });
+    }
+
+    const user = await User.findById(req.session.userId);
+    if (!user) return res.status(404).json({ error: "Kullanıcı bulunamadı" });
+
+    const bcrypt = require("bcryptjs");
+    const match = await bcrypt.compare(currentPassword, user.password);
+    if (!match) return res.status(401).json({ error: "Mevcut şifre yanlış" });
+
+    const same = await bcrypt.compare(newPassword, user.password);
+    if (same) return res.status(400).json({ error: "Yeni şifre eskiyle aynı olamaz" });
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    user.password = hashed;
+    await user.save();
+
+    // güvenlik için oturumu kapatalım
+    req.session.destroy(() => {
+      res.json({ ok: true, message: "Şifre değiştirildi, lütfen tekrar giriş yapın." });
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Sunucu hatası" });
+  }
+});
