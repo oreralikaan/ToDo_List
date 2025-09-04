@@ -2,6 +2,7 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
+const Task = require("../models/Task");
 
 const router = express.Router();
 
@@ -63,6 +64,27 @@ router.post("/logout", (req, res) => {
   req.session.destroy(() => {
     res.json({ ok: true });
   });
+});
+// --- Hesabı sil (kullanıcı + tüm görevleri) ---
+router.delete("/account", async (req, res) => {
+  try {
+    if (!req.session.userId) return res.status(401).json({ error: "Giriş gerekli" });
+
+    const uid = req.session.userId;
+
+    // Kullanıcıya ait tüm görevleri ve kullanıcı kaydını sil
+    await Promise.all([
+      Task.deleteMany({ userId: uid }),
+      User.findByIdAndDelete(uid),
+    ]);
+
+    // Oturumu kapat
+    req.session.destroy(() => {
+      res.json({ ok: true, message: "Hesap ve görevler silindi" });
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Sunucu hatası" });
+  }
 });
 
 module.exports = router;

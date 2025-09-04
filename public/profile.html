@@ -35,6 +35,10 @@
       <div class="d-flex gap-2">
         <a href="/tasks.html" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Görevlere Dön</a>
         <button id="btnLogout" class="btn btn-outline-dark btn-sm"><i class="bi bi-box-arrow-right"></i> Çıkış</button>
+        <button id="btnDeleteAccount" class="btn btn-outline-danger btn-sm">
+  <i class="bi bi-trash"></i> Hesabı Sil
+</button>
+
       </div>
     </div>
 
@@ -116,6 +120,42 @@
     });
 
     loadMe();
+    // Hesap silme
+document.getElementById("btnDeleteAccount").addEventListener("click", async () => {
+  Swal.fire({
+    title: "Emin misin?",
+    text: "Hesabın ve TÜM görevlerin kalıcı olarak silinecek.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#3085d6",
+    confirmButtonText: "Evet, sil",
+    cancelButtonText: "Vazgeç"
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      const res = await fetch("/api/auth/account", { method: "DELETE" });
+      const out = await res.json();
+      if (res.ok && out.ok) {
+        Swal.fire({
+          icon: "success",
+          title: "Hesap silindi",
+          text: "Kayıt ekranına yönlendiriliyorsun.",
+          showConfirmButton: false,
+          timer: 1500
+        }).then(() => {
+          location.href = "/register.html";
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Hata",
+          text: out.error || "Hesap silinemedi"
+        });
+      }
+    }
+  });
+});
+
   </script>
 </body>
 </html>
