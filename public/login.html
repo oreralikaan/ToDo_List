@@ -60,6 +60,13 @@
                 <button class="btn btn-outline-secondary" type="button" id="togglePwd"><i class="bi bi-eye"></i></button>
               </div>
             </div>
+            <div class="form-check">
+  <input class="form-check-input" type="checkbox" id="rememberMe">
+  <label class="form-check-label" for="rememberMe">
+    Beni hatırla
+  </label>
+</div>
+
             <button class="btn btn-success w-100" type="submit"><i class="bi bi-box-arrow-in-right me-1"></i> Giriş Yap</button>
           </form>
         </div>
@@ -73,27 +80,55 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    document.getElementById("togglePwd").onclick = () => {
-      const p = document.getElementById("pwd");
-      p.type = p.type === "password" ? "text" : "password";
-    };
+<script>
+  // Şifre göster/gizle
+  document.getElementById("togglePwd").onclick = () => {
+    const p = document.getElementById("pwd");
+    p.type = p.type === "password" ? "text" : "password";
+  };
 
-    document.getElementById("loginForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const data = Object.fromEntries(new FormData(e.target).entries());
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-      });
-      const result = await res.json();
-      if (result.ok) {
-        window.location.href = "/tasks.html";
-      } else {
-        alert("❌ " + (result.error || "Hata"));
-      }
+  // Sayfa açıldığında localStorage'dan email + şifre getir
+  document.addEventListener("DOMContentLoaded", () => {
+    const savedEmail = localStorage.getItem("rememberEmail");
+    const savedPass  = localStorage.getItem("rememberPass");
+    if (savedEmail) {
+      document.querySelector("input[name='email']").value = savedEmail;
+      const cb = document.getElementById("rememberMe");
+      if (cb) cb.checked = true;
+    }
+    if (savedPass) {
+      document.querySelector("input[name='password']").value = savedPass;
+    }
+  });
+
+  // Tek submit handler
+  document.getElementById("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(e.target).entries());
+
+    // Beni hatırla işaretliyse email + şifreyi kaydet, değilse sil
+    if (document.getElementById("rememberMe").checked) {
+      localStorage.setItem("rememberEmail", data.email);
+      localStorage.setItem("rememberPass", data.password);
+    } else {
+      localStorage.removeItem("rememberEmail");
+      localStorage.removeItem("rememberPass");
+    }
+
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
     });
-  </script>
+    const result = await res.json();
+
+    if (result.ok) {
+      window.location.href = "/tasks.html";
+    } else {
+      alert("❌ " + (result.error || "Hata"));
+    }
+  });
+</script>
+
 </body>
 </html>
