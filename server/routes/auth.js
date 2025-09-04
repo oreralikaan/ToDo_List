@@ -109,3 +109,37 @@ router.post("/change-password", async (req, res) => {
     res.status(500).json({ error: "Sunucu hatası" });
   }
 });
+// --- Profil güncelle (ad, soyad, kullanıcı adı) ---
+router.put("/profile", async (req, res) => {
+  try {
+    if (!req.session.userId) return res.status(401).json({ error: "Giriş gerekli" });
+
+    let { firstName, lastName, username } = req.body || {};
+    firstName = (firstName || "").trim();
+    lastName  = (lastName  || "").trim();
+    username  = (username  || "").trim();
+
+    if (!firstName || !lastName || !username) {
+      return res.status(400).json({ error: "Ad, soyad ve kullanıcı adı zorunlu" });
+    }
+
+    // Kullanıcı adı başka biri tarafından kullanılıyor mu?
+    const existsUsername = await User.findOne({
+      username,
+      _id: { $ne: req.session.userId }
+    });
+    if (existsUsername) {
+      return res.status(400).json({ error: "Bu kullanıcı adı zaten kullanılıyor" });
+    }
+
+    const updated = await User.findByIdAndUpdate(
+      req.session.userId,
+      { firstName, lastName, username },
+      { new: true, select: "firstName lastName username email" }
+    );
+
+    res.json({ ok: true, user: updated });
+  } catch (err) {
+    res.status(500).json({ error: "Sunucu hatası" });
+  }
+});
