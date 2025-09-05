@@ -15,12 +15,29 @@ function requireLogin(req, res, next) {
 // --- Görev ekle ---
 router.post("/", requireLogin, async (req, res) => {
   try {
-    const { text } = req.body;
-    if (!text) return res.status(400).json({ error: "Metin zorunlu" });
+    const { text, level } = req.body;
+    if (!text || !text.trim()) {
+      return res.status(400).json({ error: "Metin zorunlu" });
+    }
 
-    const t = await Task.create({ userId: req.session.userId, text });
+    // Gönderilen level'i enum ile birebir eşle (case-insensitive)
+    const map = {
+      "düşük öncelik": "Düşük Öncelik",
+      "orta öncelik": "Orta Öncelik",
+      "yüksek öncelik": "Yüksek Öncelik",
+    };
+    const key = (level || "").toLowerCase();
+    const cleanLevel = map[key] || "Orta Öncelik";
+
+    const t = await Task.create({
+      userId: req.session.userId,
+      text: text.trim(),
+      level: cleanLevel, // Modelde: "Düşük Öncelik" | "Orta Öncelik" | "Yüksek Öncelik"
+    });
+
     res.status(201).json(t);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Sunucu hatası" });
   }
 });
@@ -29,8 +46,7 @@ router.post("/", requireLogin, async (req, res) => {
 router.get("/", requireLogin, async (req, res) => {
   try {
     const filter = req.query.filter || "all";
-    let q = { userId: req.session.userId };
-
+    const q = { userId: req.session.userId };
     if (filter === "done") q.done = true;
     if (filter === "todo") q.done = false;
 
@@ -56,7 +72,6 @@ router.put("/:id", requireLogin, async (req, res) => {
   }
 });
 
-module.exports = router;
 // --- Görev sil ---
 router.delete("/:id", requireLogin, async (req, res) => {
   try {
@@ -66,3 +81,5 @@ router.delete("/:id", requireLogin, async (req, res) => {
     res.status(500).json({ error: "Sunucu hatası" });
   }
 });
+
+module.exports = router;
