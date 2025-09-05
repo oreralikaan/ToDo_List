@@ -39,5 +39,5 @@ MONGODB_URI = "mongodb://127.0.0.1:27017/gorev-yonetim-db" (örneğin)
 npm run dev
 ```
 
-Uygulama artık http://localhost:3000(port numarası) adresinden erişilebilir durumda olacak.
+Uygulama artık http://localhost:3000(port numarası)/login.html adresinden erişilebilir durumda olacak.
 
