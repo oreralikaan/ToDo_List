@@ -52,4 +52,4 @@ app.use("/api/tasks", taskRouter);
 
 // --- Server start ---
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Server hazır: http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server hazır: http://localhost:${PORT}/login.html`));
